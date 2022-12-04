@@ -1,0 +1,53 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum role_key {
+    anonymous
+    admin
+}
+
+model User {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email String? @unique
+  password String?
+  roles Role[]
+  rooms Room[]
+  messages Message[]
+
+  @@map("user")
+}
+
+model Role {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  key role_key @unique
+  value String
+  users User[]
+
+  @@map("role")
+}
+
+model Room {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  users User[]
+  messages Message[]
+
+  @@map("room")
+}
+
+
+model Message {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  content String
+  user User @relation(fields: [userId], references: [id], map: "message_user")
+  userId String @db.Uuid
+  room Room @relation(fields: [roomId], references: [id], map: "message_room")
+  roomId String @db.Uuid
+
+  @@map("message")
+}
