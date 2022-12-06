@@ -4,7 +4,6 @@ import {
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
-  WsResponse,
   OnGatewayInit,
   OnGatewayConnection,
   OnGatewayDisconnect,
@@ -43,6 +42,8 @@ export class ApiWsGateway
       payload.senderId || client.id,
     );
 
+    client['id'] = candidate.id;
+
     const admins = await this.userService.findManyByRole('admin');
     const adminsId = admins.map((ad) => ad.id);
 
@@ -61,9 +62,7 @@ export class ApiWsGateway
         userId: anonymous.id,
       });
 
-      this.server.clients.forEach((cl) => {
-        if (adminsId.includes(cl.id)) cl.send(JSON.stringify(msg));
-      });
+      this.sendMessageToClients(adminsId, msg);
 
       return;
     }
@@ -74,9 +73,7 @@ export class ApiWsGateway
       userId: candidate.id,
     });
 
-    this.server.clients.forEach((cl) => {
-      if (adminsId.includes(cl.id)) cl.send(JSON.stringify(msg));
-    });
+    this.sendMessageToClients(adminsId, msg);
   }
 
   @SubscribeMessage('send-admin-msg')
@@ -88,8 +85,7 @@ export class ApiWsGateway
     }
 
     const adminAccess = this.roleService.checkAccess(candidate.roles, 'admin');
-    const users = await this.userService.findManyByRoomId(payload.roomId);
-    const userIds = users.map((ad) => ad.id);
+    const roomUsers = await this.userService.findManyByRoomId(payload.roomId);
 
     if (!adminAccess) {
       throw new WsException('Нет доступа');
@@ -101,9 +97,10 @@ export class ApiWsGateway
       userId: candidate.id,
     });
 
-    this.server.clients.forEach((cl) => {
-      if (userIds.includes(cl.id)) cl.send(JSON.stringify(msg));
-    });
+    const receivers = roomUsers.filter((u) => u.id !== candidate.id);
+    const receiversId = receivers.map((r) => r.id);
+
+    this.sendMessageToClients(receiversId, msg);
   }
 
   afterInit(server: Server) {
@@ -121,5 +118,11 @@ export class ApiWsGateway
     client['id'] = userId ?? undefined;
 
     this.logger.log(`Client connected: ${userId}`);
+  }
+
+  sendMessageToClients(clientsId: Uuid[], msg: Record<string, unknown>) {
+    this.server.clients.forEach(
+      (c) => clientsId.includes(c.id) && c.send(JSON.stringify(msg)),
+    );
   }
 }
