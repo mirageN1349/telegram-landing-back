@@ -5,6 +5,7 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  Query,
   Req,
   Res,
   UseGuards,
@@ -13,6 +14,8 @@ import { Response } from 'express';
 import { CurrentUser } from 'src/@common/decorators/current-user.decorator';
 import { AuthGuard } from 'src/@common/guards/auth.guard';
 import { AppRequest, CurrentUser as CurrentUserData } from 'src/@types/auth';
+import { MessageService } from 'src/chat/message.service';
+import { RoomService } from 'src/chat/room.service';
 import { UserService } from 'src/user/user.service';
 import { AuthService } from './auth.service';
 import { SignInDto } from './dto/signin.dto';
@@ -23,6 +26,8 @@ export class ApiController {
   constructor(
     private authService: AuthService,
     private userService: UserService,
+    private messageService: MessageService,
+    private roomService: RoomService,
   ) {}
 
   @Get('auth/current-user')
@@ -80,5 +85,11 @@ export class ApiController {
     res.clearCookie('refreshToken', { httpOnly: true });
 
     return res.json({ message: 'Пуки подчищены!) ' });
+  }
+
+  @Get('chat/message')
+  @HttpCode(HttpStatus.OK)
+  async getMessages(@Query() { roomId }: { roomId: Uuid }) {
+    return this.messageService.findManyByRoomId(roomId);
   }
 }

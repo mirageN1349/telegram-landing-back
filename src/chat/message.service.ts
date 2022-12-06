@@ -13,12 +13,22 @@ export class MessageService {
       content: true,
       roomId: true,
       userId: true,
+      createdAt: true,
+      updatedAt: true,
     };
   }
 
   async findOne(id: Uuid): Promise<Message | null> {
     return this.prisma.message.findUnique({
       where: { id },
+      select: this.select,
+    });
+  }
+
+  async findManyByRoomId(roomId: Uuid): Promise<Message[] | null> {
+    return this.prisma.message.findMany({
+      where: { roomId },
+      orderBy: { createdAt: 'desc' },
       select: this.select,
     });
   }

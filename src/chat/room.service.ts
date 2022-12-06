@@ -12,6 +12,8 @@ export class RoomService {
       id: true,
       messages: true,
       users: true,
+      createdAt: true,
+      updatedAt: true,
     };
   }
 
@@ -19,6 +21,12 @@ export class RoomService {
     return this.prisma.room.findUnique({
       where: { id },
       select: this.select,
+    });
+  }
+
+  async findManyWithLastMessage(userId: Uuid): Promise<Room[] | null> {
+    return this.prisma.room.findMany({
+      include: { users: { where: { id: userId }, take: 1 } },
     });
   }
 

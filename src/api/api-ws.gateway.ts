@@ -42,7 +42,7 @@ export class ApiWsGateway
       payload.senderId || client.id,
     );
 
-    client['id'] = candidate.id;
+    client['id'] = candidate?.id;
 
     const admins = await this.userService.findManyByRole('admin');
     const adminsId = admins.map((ad) => ad.id);
@@ -97,8 +97,7 @@ export class ApiWsGateway
       userId: candidate.id,
     });
 
-    const receivers = roomUsers.filter((u) => u.id !== candidate.id);
-    const receiversId = receivers.map((r) => r.id);
+    const receiversId = roomUsers.map((r) => r.id);
 
     this.sendMessageToClients(receiversId, msg);
   }

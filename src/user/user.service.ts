@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { role_key, User } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
 import { UserCreateDto } from './dto/create-user.dto';
@@ -15,14 +15,19 @@ export class UserService {
       password: false,
       roles: true,
       rooms: true,
+      createdAt: true,
+      updatedAt: true,
     };
   }
 
   async findOne(id: Uuid) {
     if (!id) return null;
-    return this.prisma.user.findUnique({
+    return await this.prisma.user.findUnique({
       where: { id },
-      select: this.select,
+      select: {
+        ...this.select,
+        rooms: { include: { messages: { take: 1 } } },
+      },
     });
   }
 
