@@ -39,4 +39,4 @@ lerna-debug.log*
 
 # docker
 pgdata
-db-docker
+docker-entrypoint-initdb.d
